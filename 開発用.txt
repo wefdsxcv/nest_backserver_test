@@ -4,3 +4,5 @@ git hub flow にのっとり、　git hub
 ~github flow ~
 main 完成用　feature機能開発push用ブランチ
 
+ブランチ分けの練習のため　取り会えずfeature ブランチにpush する。zennの記事参照。
+
