@@ -1,0 +1,26 @@
+目的ci/cd aws docker 練習およびアーキテクチャ　domain 層などの練習。依存性逆転の原則を用いる。
+
+実行環境
+node.js
+フレームワーク
+nest.js 
+技術選定
+ci/cd docker aws
+
+階層構造
+
+
+機能要件
+デプロイ練習　単体テスト　mock 　できたら結合テスト
+git hub flow にもとずき、git hub ブランチ分け
+なので、層構造。
+
+アーキテクチャ　domain層
+
+ミドルウェア   jwt認証　　レート制限　　Redis　
+
+ログ
+
+
+非機能要件
+なし
