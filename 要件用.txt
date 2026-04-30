@@ -10,10 +10,11 @@ ci/cd docker aws
 階層構造
 
 
-機能要件
+機能要件（練習したいこと）
+一旦　普通にテキストをフロント　⇒　apiサーバーで受け取り。
+DM機能（websocket）
+
 デプロイ練習　単体テスト　mock 　できたら結合テスト
-git hub flow にもとずき、git hub ブランチ分け
-なので、層構造。
 
 アーキテクチャ　domain層
 
