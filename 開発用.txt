@@ -1,8 +1,92 @@
-
-
+2026/04/30
 git hub flow にのっとり、　git hub 
 ~github flow ~
 main 完成用　feature機能開発push用ブランチ
 
 ブランチ分けの練習のため　取り会えずfeature ブランチにpush する。zennの記事参照。
 
+PR作成　⇒　main にマージ。
+
+マージできたので、一旦　普通にフロントから　テキストをbodyに　⇒　apiサーバーで受け取り。をnestで実装。　
+その後、ci 単体テストも実施します。　また、docker を使用して　aws へのデプロイも体験する予定です。
+
+git checkout -b feature/text_uketori_hozon_api　ブランチを切りました。このブランチではapi を構築します。dto di domain　アーキテクチャを体験します。
+
+src/dto/message_dto.ts を作成。
+ts はあくまでコンパイル時にはじくだけ。本番時にはじくためにzod（バリデーション） を入れる。
+npm install zod nestjs-zod
+
+2026/05/21
+フロント
+↓
+POST /message
+↓
+body.text を受け取る
+↓
+zod validation
+↓
+serviceへ渡す
+↓
+repository保存（仮）
+↓
+controllerでresponse返す
+
+package.json
+node_modules が存在するデレクトリで
+
+npm run start:dev　起動！
+
+
+@Injectable()
+nest にDI 管理させる　コンテナを明示
+
+src/main.ts  
+port 記載　等
+NestFactory.create(AppModule);  一番最初にapp.module ファイルを読み込む
+
+
+
+src/app.module.ts
+一番最初にNestが読む、
+アプリ全体の設定ファイル
+
+import { Module } from '@nestjs/common';
+
+import { MessageModule } from './modules/message/message.module';
+
+@Module({
+  imports: [MessageModule],
+})
+
+
+
+src/module(機能単位)/message（機能） message_module.ts 
+@Module({
+  controllers: [　　　controller 機能を提供（http リクエストレスポンス　受付）
+    MessageController,
+  ],
+
+  providers: [　　　　機能単位で　DIコンテナ管理対象　を記載。
+    MessageService,　　
+    MessageRepository,
+  ],
+})
+
+~~~~これから　やること～
+DI / DIP と Mock の関係
+
+本番環境では UserService に RealDatabaseRepository を注入します。
+
+テスト環境では、実際のDBに接続したくないため、インターフェースは同じで中身が空っぽの MockDatabaseRepository を注入します。これがDIコンテナを使う最大のメリットの一つです。
+
+単体テスト (Unit Test)
+
+NestJSでは標準で Jest というテストフレームワークが組み込まれています。関数やクラス単体が正しく動くかを検証します。
+
+CI (継続的インテグレーション)
+
+コードをGitHubなどにプッシュした際に、自動で単体テストを実行する仕組みです。今回は最もメジャーな GitHub Actions を使うのがおすすめです。
+
+AWS (Amazon Web Services)
+
+最初は「触ったことがない」状態でも大丈夫です。今回のゴールとしては、CIでテストが通ったら自動的にAWSのサーバー（例えば AWS App Runner や ECS、S3など）にデプロイされる仕組み（CD）を目指すと、一気に実務レベルの知識になります。
