@@ -58,7 +58,7 @@ import { MessageModule } from './modules/message/message.module';
   imports: [MessageModule],
 })
 
-
+postリクエスト　して　レスポンスが返ってくることをcurlで確認。ブランチを切って、PRを出す練習をする。
 
 src/module(機能単位)/message（機能） message_module.ts 
 @Module({
@@ -73,20 +73,75 @@ src/module(機能単位)/message（機能） message_module.ts
 })
 
 ~~~~これから　やること～
-DI / DIP と Mock の関係
+⓵DI / DIP と Mock の関係
 
 本番環境では UserService に RealDatabaseRepository を注入します。
 
 テスト環境では、実際のDBに接続したくないため、インターフェースは同じで中身が空っぽの MockDatabaseRepository を注入します。これがDIコンテナを使う最大のメリットの一つです。
 
-単体テスト (Unit Test)
+⓶単体テスト (Unit Test)
 
 NestJSでは標準で Jest というテストフレームワークが組み込まれています。関数やクラス単体が正しく動くかを検証します。
 
-CI (継続的インテグレーション)
+⓷CI (継続的インテグレーション)
 
 コードをGitHubなどにプッシュした際に、自動で単体テストを実行する仕組みです。今回は最もメジャーな GitHub Actions を使うのがおすすめです。
 
-AWS (Amazon Web Services)
+⓸AWS (Amazon Web Services)
 
 最初は「触ったことがない」状態でも大丈夫です。今回のゴールとしては、CIでテストが通ったら自動的にAWSのサーバー（例えば AWS App Runner や ECS、S3など）にデプロイされる仕組み（CD）を目指すと、一気に実務レベルの知識になります。
+
+Step 1: NestJSで「Mockを使った単体テスト」を書く
+Step 2: GitHub Actionsで「CI」を構築する
+Step 3: AWSの準備（一番簡単な方法から。docker を使ってデプロイでもよい）
+Step 4: CIとAWSを繋げる（CDの体験）
+
+～TypeScriptは「JavaScript + 型チェック」～
+const name: string = "yuki";
+
+TypeScriptはjs にビルドするときのみ、name に数値等が入っていないか確認するだけ
+そのため、interface  は　js コンパイル時に　消滅する。
+domain 層の repository-interface / message_repository_interface.ts ではabstruct 抽象クラス　にて実装する。
+
+
+～テストコード配置箇所～
+1. なぜ実装と同じフォルダ（src/modules/...）に置くのがいいの？
+ts/js では実装と同じフォルダに置くのがデフォルト。
+
+
+2. じゃあ、別フォルダ（test/ フォルダなど）には何を置くの？
+実は、NestJSのプロジェクトを作成すると、ルート直下に test/ というフォルダも自動で作られます。ここには「統合テスト（E2Eテスト）」を置くのが一般的です。
+
+~テストでjest を使う理由~
+NestJSとJestの相性は抜群（公式が標準採用するレベル）
+
+本番環境（message.module.ts）
+NestJSのDIコンテナに「IMessageRepository には MessageRepository（本物）を入れろ」と指示。
+
+テスト環境（message.service.spec.ts）
+NestJSのテスト用DIコンテナ（Test.createTestingModule）を作り、「IMessageRepository には jest.fn() で作ったMock（偽物）を入れろ」と指示。
+
+NestJSが標準で持っている「注入する中身を切り替える機能（DI）」をそのまま使って、テストの時だけ偽物を流し込んでいるのです
+
+
+プロジェクト　npm run test　　　実行
+
+> nest_backserver@0.0.1 test
+> jest
+
+ PASS  src/modules/message/application/message.service.spec.ts
+  MessageService (単体テスト)
+    ✓ メッセージが正常に保存され、その結果が返ってくること (10 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        0.83 s
+Ran all test suites.
+ep24025@LAPTOP-SULE0142:~/nest_backserver$ 
+
+～内部の仕組み～
+
+Test.createTestingModule を使って、MessageService をテストするためだけの「極小のDIコンテナ」をメモリ上に一瞬で作りました。
+本物のデータベースに繋がるリポジトリ(infrastrucuture)ではなく、中身が空っぽのMockリポジトリを MessageService にガチャンと結合（DI）させました。
+
