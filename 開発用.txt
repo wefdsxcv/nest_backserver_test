@@ -124,7 +124,15 @@ NestJSのテスト用DIコンテナ（Test.createTestingModule）を作り、「
 NestJSが標準で持っている「注入する中身を切り替える機能（DI）」をそのまま使って、テストの時だけ偽物を流し込んでいるのです
 
 
-npm run build なら　このbuild の部分が script{  "build": "nest build" }  内部で　nest build が動く。
+npm run build なら　
+このbuild の部分が 
+script{  "build": "nest build" }  内部で　nest build が動く。
+scriptをみれば、
+起動方法
+テスト方法
+ビルド方法
+Lint方法　　　等が分かる。
+　
 プロジェクト　npm run test　　　実行(package.json で記載したコマンドで実行できる)
 
 > nest_backserver@0.0.1 test
@@ -156,3 +164,5 @@ git hub Actionsで「CI」を構築する
 package.jsonが存在する箇所にフォルダとファイル　
 
 .github/workflows/ci.yml
+
+ci が動いているか　確認するためにaction タブを確認する。
