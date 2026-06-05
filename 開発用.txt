@@ -166,3 +166,8 @@ package.jsonが存在する箇所にフォルダとファイル　
 .github/workflows/ci.yml
 
 ci が動いているか　確認するためにaction タブを確認する。
+
+ESlint　によるエラーで ci のテストが　通らない。　コードをAIに修正後、push 
+実際のdbを使っていないので、async  書いていてもawait していなかったり　した箇所などを修正。
+
+
