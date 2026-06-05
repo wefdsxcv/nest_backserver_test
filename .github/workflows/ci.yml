@@ -1,4 +1,4 @@
-came: CI (NestJS Unit Test)
+name: CI (NestJS Unit Test)
 
 # どのタイミングでこのCIを動かすかを指定します
 on:
