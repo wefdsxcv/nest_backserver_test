@@ -170,4 +170,12 @@ ci が動いているか　確認するためにaction タブを確認する。
 ESlint　によるエラーで ci のテストが　通らない。　コードをAIに修正後、push 
 実際のdbを使っていないので、async  書いていてもawait していなかったり　した箇所などを修正。
 
+step3 aws デプロイ　cd　構築をする。
+1⃣NestJSアプリを「Dockerコンテナ」としてパッケージ化し、AWSの ECS（Elastic Container Service）Fargate というサーバー管理不要のサービスで動かします。
+2⃣NestJSをサーバーレス関数（Lambda）として動かす構成です。リクエストが来た一瞬だけプログラムが起動して処理します。
+3⃣AWS上にLinuxの仮想サーバー（EC2）を1台借りて、その中にNode.jsを入れて動かす（サーバーのセキュリティ対策やプロセス管理　必要）
+今回は1⃣。　docker を使い、コンテナを作成する。
+プロジェクト直下に　Dockerfile + docker-compose.yml  
 
+クレジットカード登録や　課金はしたくないので、
+render にデプロイ　　language をdocker　に。 dockerfile を作成。
