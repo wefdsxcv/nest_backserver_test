@@ -1,37 +1,48 @@
-name: CI (NestJS Unit Test)
+name: CI/CD Pipeline
 
-# どのタイミングでこのCIを動かすかを指定します
 on:
   push:
-    branches: [ "main" ] # mainブランチにプッシュされた時
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ] # mainブランチに向けてプルリクエストが作られた時
+    branches: [ "main" ]
 
 jobs:
+  # ==========================================
+  # 1. 継続的インテグレーション (CI) ジョブ
+  # ==========================================
   test-and-lint:
-    # 実行する仮想環境（GitHubが用意してくれるLinuxサーバー）を指定
     runs-on: ubuntu-latest
 
     steps:
-      # 1. GitHubのサーバーに、あなたのソースコードをダウンロード（チェックアウト）します
-      - name: Checkout ソースコード取得。ここはただのラベル
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Node.jsの環境をセットアップします
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # package.jsonや環境に合わせたバージョン
-          cache: 'npm'       # 2回目以降の実行を速くするためにライブラリをキャッシュ
+          node-version: '20'
+          cache: 'npm'
 
-      # 3. 必要な外部ライブラリ（package.jsonに書かれたもの）をインストールします
       - name: Install dependencies
         run: npm ci
 
-      # 4. コードの書き方に問題がないかチェック（Lint）します
       - name: Run Lint
         run: npm run lint
 
-      # 5. 【メイン】ローカルでやったのと同じ単体テストを実行します！
       - name: Run Unit Tests
         run: npm run test
+
+  # ==========================================
+  # 2. 継続的デリバリー (CD) ジョブ（新設！）
+  # ==========================================
+  deploy:
+    runs-on: ubuntu-latest
+    # ★ここがプロの技！「test-and-lintが成功した時だけ実行する」という依存関係を定義
+    needs: test-and-lint
+    # mainブランチへのプッシュ（またはマージ）の時だけ動かす（PRの時点ではデプロイさせない）
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Trigger Render Deploy
+        run: |
+          curl -X POST "${{ secrets.RENDER_CD_DEPLOY_HOOK_URL }}"
