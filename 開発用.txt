@@ -179,3 +179,11 @@ step3 aws デプロイ　cd　構築をする。
 
 クレジットカード登録や　課金はしたくないので、
 render にデプロイ　　language をdocker　に。 dockerfile を作成。
+
+render は自動でmain にpush されると自動でデプロイする。ciテストが通った時だけ、デプロイされるようにci.yml ファイルを変更。
+
+この場合、テスト通った時に、render にデプロイ。　GitHub Secrets　に記載。
+① [ GitHub Actions  ] 特定条件下の時にweb hook （リクエスト）送る。    (Deploy HookのURL)  ⇒　render 
+
+
+render envriomnet （render の方の環境変数はプロジェクトで用いられる環境変数等です）
