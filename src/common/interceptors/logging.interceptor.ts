@@ -17,7 +17,6 @@ export class LoggingInterceptor implements NestInterceptor {
     const response = ctx.getResponse<Response>();
 
     const { method, url } = request;
-    // expressの初期型定義で any になっている body を、安全な unknown 型として明示的に受け取る
     const body = request.body as unknown;
     const startTime = Date.now();
 
@@ -28,7 +27,6 @@ export class LoggingInterceptor implements NestInterceptor {
       type: 'REQUEST',
       method: String(method),
       url: String(url),
-      // body が真偽値・オブジェクトであり、かつ null でないことを安全にチェック
       body:
         body && typeof body === 'object'
           ? (body as Record<string, unknown>)
