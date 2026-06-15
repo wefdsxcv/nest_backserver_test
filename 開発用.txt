@@ -231,13 +231,10 @@ ESLintエラー（不正な全角スペース）の修正と初デプロイ成�
 やったこと: コピペの際に混入した「目に見えない特殊なスペース」を検知してCIがデプロイをブロックしたため、ファイルを綺麗に修正。再度 git push し、CIのテスト合格を経て、Renderへのコンテナ自動デプロイ（CD）を完全成功させました。
 
 
-
-
-
-
+～今後の方針（git hub isuue の方を参考）～
 ci単体テストを実装したので、結合テストを実装する。
-てかcrud　とかやprisma などのormを使いsql を書くために、何かapi の処理を作る？
 共通ログミドルウェアの実装（renderはec2,ecs（サーバーとコンテナ管理等）、DNS(https://nest-backserver.onrender.com )、　ロードバランサー・SSL化（https）、linux 側のsysted等の 標準出力(console.log)などのOS(linux)側の設定　を行う。ので、ログ設計に関しては、console.log(json)で出力することや　ログを保存するための別の　サーバーを用意すること　で良い。ログをcontoroler で管理すると大変なので（機能事のcontoroler で管理する羽目になるため）middware で共通化処理として　差し込むのが普通。　また、nginx 等のリバースプロキシを導入したり、render ではスケールアウト時には、　手動スケールか、自動スケールが存在する。スケールアウト時に考えるべきことは　複数サーバー間での　共通状態を保持できるようにすること　や、セッション方式ではなく、redis 等にセッション情報を格納するか、JWT を用いる。例えば、バッチ処理等　の場合、どのサーバーがバッチ処理を行ったかなどの状態を　redis 等を使ったり、DB等に保存したりする。）
+
 
 
 今後は何をしたかを簡潔にここに書く。
@@ -267,5 +264,13 @@ NestJS では Middleware → Guard → Interceptor → Pipe → Controller → S
 
 実務では上記のログを専用のサーバー（DB）などに保持する。また、ログのレベル（level（INFO / ERROR））に応じてslack 等に通知を発火する（webhook）等を行う。
 
+timestamp（時刻）
+level（INFO / ERROR）
+type（REQUEST / RESPONSE）
+method（POST）
+url（/message）
+body（リクエスト内容）
+statusCode（レスポンス）
+responseTimeMs（処理時間）   各ログ一覧。
 
-
+～ESlint エラー～
