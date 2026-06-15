@@ -148,6 +148,16 @@ Repository Implementation
 
 フロントエンドから送信されたテキストを受け取り、保存した結果を返却します。
 
+フロントからのリクエスト形式想定～
+{
+  "text": "こんにちは！"
+}
+これ以外の形式はzod によって、はじかれる。
+const CreateMessageSchema = z.object({
+  text: z.string().min(1).max(100),
+});
+
+
 処理フロー
 
 ```text
@@ -270,6 +280,13 @@ Push時に自動で
 ```text
 .github/workflows/ci.yml
 ```
+
+---
+
+# CD
+render にデプロイ。（aws はクレジットカード登録したくないので一旦render）
+ciテスト通過時に、render にデプロイされるように、
+dockerfile を記載。
 
 ---
 

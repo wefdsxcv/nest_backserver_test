@@ -185,5 +185,87 @@ render は自動でmain にpush されると自動でデプロイする。ciテ�
 この場合、テスト通った時に、render にデプロイ。　GitHub Secrets　に記載。
 ① [ GitHub Actions  ] 特定条件下の時にweb hook （リクエスト）送る。    (Deploy HookのURL)  ⇒　render 
 
-
 render envriomnet （render の方の環境変数はプロジェクトで用いられる環境変数等です）
+
+～現状の流れ～
+1. アプリケーションの土台とDDD風アーキテクチャの構築
+最初に、ディレクトリを機能単位（modules/message）で分割し、DDDの思想を取り入れた階層構造を作成しました。
+
+src/modules/message/domain/repository-interface/message.repository.interface.ts の作成
+やったこと: TypeScriptの interface はJavaScriptへのコンパイル時に消滅してNestJSのDIで使えなくなるため、あえて abstract class（抽象クラス） を使ってインターフェースを定義しました。これにより、JS実行時にも型情報を残し、DIP（依存性逆転の原則）を綺麗に成立させました。
+
+src/modules/message/infrastructure/message.repository.ts の作成
+やったこと: 上記の抽象クラスを implements し、実際のDB保存処理（まずは console.log のモック）を担当する具体的なインフラ層のクラスを実装しました。
+
+src/modules/message/application/message.service.ts の作成
+やったこと: ビジネスロジックを担うユースケース層を実装しました。コンストラクタで抽象クラス（インターフェース）に依存させることで、具体的なリポジトリの実装に依存しない、疎結合な設計にしました。
+
+src/modules/message/presentation/dto/ の作成 ＆ nestjs-zod の導入
+やったこと: npm install zod nestjs-zod を実行し、Zodを用いたDTOクラスを作成。フロントから送られてくる body.text をコントローラーに入る手前で検証（バリデーション）し、不正なリクエストを本番環境（ランタイム）で確実に弾く仕組み（Zod Pipe）を構築しました。
+
+src/modules/message/message.module.ts の編集
+やったこと: NestJSのDIコンテナ設定ファイルに、抽象クラス（トークン）と具体的なインフラ層クラスを結びつける記述（provide: IMessageRepository, useClass: MessageRepository）を追加し、アプリ全体をガチャンと結合しました。
+
+2. 単体テストの実装
+インフラ層（実際のデータベース）に依存せず、ロジックだけを高速にテストする環境を作りました。
+
+src/modules/message/application/message.service.spec.ts の編集
+やったこと: Test.createTestingModule を使用して、メモリ上にテスト用の極小DIコンテナを作成。本物の MessageRepository ではなく、jest.fn() で作った中身が空っぽの Mock（偽物）を注入 することで、データベースなしで1秒未満で終わるクリーンな単体テストを成功させました。
+
+package.json の確認とテスト実行
+やったこと: npm run test を実行。内部で jest が動き、作成した単体テストが正常に PASS することを確認しました。
+
+3. CI/CDパイプラインの構築（自動化と防衛線の設置）
+コードをGitHubにプッシュした際、テストに合格した安全なコードだけをRenderへ自動デプロイする仕組みを作りました。
+
+Renderダッシュボードでの設定変更
+やったこと: 予期せぬエラーコードが即デプロイされるのを防ぐため、Renderの「Settings」から 「Auto Deploy」を No に変更。同時に、外部からデプロイを命令するための 「Deploy HookのURL」をコピー しました。
+
+GitHubリポジトリの設定変更
+やったこと: コピーしたRenderのURLを隠すため、GitHubの画面から Settings -> Secrets and variables -> Actions を開き、Repository Secrets に環境変数 RENDER_DEPLOY_HOOK_URL としてURLを安全に登録 しました。
+
+.github/workflows/ci.yml の作成・編集
+やったこと: GitHub Actionsのワークフローファイルを編集。前半のジョブに npm run lint と npm run test を設定し、それらが 100%成功した時だけ、後半のデプロイジョブで curl -X POST を使ってGitHub SecretsのURLを叩く という「CIからCDへのリレー」を記述しました。
+
+ESLintエラー（不正な全角スペース）の修正と初デプロイ成功
+やったこと: コピペの際に混入した「目に見えない特殊なスペース」を検知してCIがデプロイをブロックしたため、ファイルを綺麗に修正。再度 git push し、CIのテスト合格を経て、Renderへのコンテナ自動デプロイ（CD）を完全成功させました。
+
+
+
+
+
+
+ci単体テストを実装したので、結合テストを実装する。
+てかcrud　とかやprisma などのormを使いsql を書くために、何かapi の処理を作る？
+共通ログミドルウェアの実装（renderはec2,ecs（サーバーとコンテナ管理等）、DNS(https://nest-backserver.onrender.com )、　ロードバランサー・SSL化（https）、linux 側のsysted等の 標準出力(console.log)などのOS(linux)側の設定　を行う。ので、ログ設計に関しては、console.log(json)で出力することや　ログを保存するための別の　サーバーを用意すること　で良い。ログをcontoroler で管理すると大変なので（機能事のcontoroler で管理する羽目になるため）middware で共通化処理として　差し込むのが普通。　また、nginx 等のリバースプロキシを導入したり、render ではスケールアウト時には、　手動スケールか、自動スケールが存在する。スケールアウト時に考えるべきことは　複数サーバー間での　共通状態を保持できるようにすること　や、セッション方式ではなく、redis 等にセッション情報を格納するか、JWT を用いる。例えば、バッチ処理等　の場合、どのサーバーがバッチ処理を行ったかなどの状態を　redis 等を使ったり、DB等に保存したりする。）
+
+
+今後は何をしたかを簡潔にここに書く。
+
+ということで、次は共通処理ミドルウエア　の実装をする。
+
+～共通処理　ログ　ミドルウエア～
+まず、ブランチをgit hub  flow にのっとり　切る。
+feature/issue_10_middlware を切る。
+src/common/interceptors/logging.interceptor.ts　ファイルを作成。記載。
+src/main.ts　　ファイルを編集。app.useGlobalInterceptors(new LoggingInterceptor());
+npm run start:dev  ローカルでnest.js 起動。
+post リクエスト（json text : " "）を送って、　標準出力に出るか確認。
+
+curl -X POST http://localhost:3000/message   -H "Content-Type: application/json"   -d '{"text":"こんにちは！"}'
+
+npm run start:dev した方のサーバーのプロセスの方で以下のログを確認。
+{"timestamp":"2026-06-15T12:46:04.057Z","level":"INFO","type":"REQUEST","method":"POST","url":"/message","body":{"text":"こんにちは！"}}
+DB保存: こんにちは！
+{"timestamp":"2026-06-15T12:46:04.060Z","level":"INFO","type":"RESPONSE","method":"POST","url":"/message","statusCode":201,"responseTimeMs":2}
+
+
+～きずいた点やなどコードの詳細はコメントに書く～
+NestJS では Middleware → Guard → Interceptor → Pipe → Controller → Service (repository)→ Interceptor（レスポンス）  の流れ。
+インターセプタ―はリクエストとレスポンスを両方触れる。
+他の言語やフレームワークでもmiddlware　でログ等共通処理を実装する。理由はcontoroler にログ出力責任（機能）を設けると　職務が汚れるため　行わない。
+
+実務では上記のログを専用のサーバー（DB）などに保持する。また、ログのレベル（level（INFO / ERROR））に応じてslack 等に通知を発火する（webhook）等を行う。
+
+
+
