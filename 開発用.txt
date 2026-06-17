@@ -4,3 +4,289 @@ git hub flow にのっとり、　git hub
 ~github flow ~
 main 完成用　feature機能開発push用ブランチ
 
+ブランチ分けの練習のため　取り会えずfeature ブランチにpush する。zennの記事参照。
+
+PR作成　⇒　main にマージ。
+
+マージできたので、一旦　普通にフロントから　テキストをbodyに　⇒　apiサーバーで受け取り。をnestで実装。　
+その後、ci 単体テストも実施します。　また、docker を使用して　aws へのデプロイも体験する予定です。
+
+git checkout -b feature/text_uketori_hozon_api　ブランチを切りました。このブランチではapi を構築します。dto di domain　アーキテクチャを体験します。
+
+src/dto/message_dto.ts を作成。
+ts はあくまでコンパイル時にはじくだけ。本番時にはじくためにzod（バリデーション） を入れる。
+npm install zod nestjs-zod
+
+2026/05/21
+フロント
+↓
+POST /message
+↓
+body.text を受け取る
+↓
+zod validation
+↓
+serviceへ渡す
+↓
+repository保存（仮）
+↓
+controllerでresponse返す
+
+package.json
+node_modules が存在するデレクトリで
+
+npm run start:dev　起動！
+
+
+@Injectable()
+nest にDI 管理させる　コンテナを明示
+
+src/main.ts  
+port 記載　等
+NestFactory.create(AppModule);  一番最初にapp.module ファイルを読み込む
+
+
+
+src/app.module.ts
+一番最初にNestが読む、
+アプリ全体の設定ファイル
+
+import { Module } from '@nestjs/common';
+
+import { MessageModule } from './modules/message/message.module';
+
+@Module({
+  imports: [MessageModule],
+})
+
+postリクエスト　して　レスポンスが返ってくることをcurlで確認。ブランチを切って、PRを出す練習をする。
+
+src/module(機能単位)/message（機能） message_module.ts 
+@Module({
+  controllers: [　　　controller 機能を提供（http リクエストレスポンス　受付）
+    MessageController,
+  ],
+
+  providers: [　　　　機能単位で　DIコンテナ管理対象　を記載。
+    MessageService,　　
+    MessageRepository,
+  ],
+})
+
+~~~~これから　やること～
+⓵DI / DIP と Mock の関係
+
+本番環境では UserService に RealDatabaseRepository を注入します。
+
+テスト環境では、実際のDBに接続したくないため、インターフェースは同じで中身が空っぽの MockDatabaseRepository を注入します。これがDIコンテナを使う最大のメリットの一つです。
+
+⓶単体テスト (Unit Test)
+
+NestJSでは標準で Jest というテストフレームワークが組み込まれています。関数やクラス単体が正しく動くかを検証します。
+
+⓷CI (継続的インテグレーション)
+
+コードをGitHubなどにプッシュした際に、自動で単体テストを実行する仕組みです。今回は最もメジャーな GitHub Actions を使うのがおすすめです。
+
+⓸AWS (Amazon Web Services)
+
+最初は「触ったことがない」状態でも大丈夫です。今回のゴールとしては、CIでテストが通ったら自動的にAWSのサーバー（例えば AWS App Runner や ECS、S3など）にデプロイされる仕組み（CD）を目指すと、一気に実務レベルの知識になります。
+
+Step 1: NestJSで「Mockを使った単体テスト」を書く
+Step 2: GitHub Actionsで「CI」を構築する
+Step 3: AWSの準備（一番簡単な方法から。docker を使ってデプロイでもよい）
+Step 4: CIとAWSを繋げる（CDの体験）
+
+～TypeScriptは「JavaScript + 型チェック」～
+const name: string = "yuki";
+
+TypeScriptはjs にビルドするときのみ、name に数値等が入っていないか確認するだけ
+そのため、interface  は　js コンパイル時に　消滅する。
+domain 層の repository-interface / message_repository_interface.ts ではabstruct 抽象クラス　にて実装する。
+
+
+～テストコード配置箇所～
+1. なぜ実装と同じフォルダ（src/modules/...）に置くのがいいの？
+ts/js では実装と同じフォルダに置くのがデフォルト。
+
+
+2. じゃあ、別フォルダ（test/ フォルダなど）には何を置くの？
+実は、NestJSのプロジェクトを作成すると、ルート直下に test/ というフォルダも自動で作られます。ここには「統合テスト（E2Eテスト）」を置くのが一般的です。
+
+~テストでjest を使う理由~
+NestJSとJestの相性は抜群（公式が標準採用するレベル）
+
+本番環境（message.module.ts）
+NestJSのDIコンテナに「IMessageRepository には MessageRepository（本物）を入れろ」と指示。
+
+テスト環境（message.service.spec.ts）
+NestJSのテスト用DIコンテナ（Test.createTestingModule）を作り、「IMessageRepository には jest.fn() で作ったMock（偽物）を入れろ」と指示。
+
+NestJSが標準で持っている「注入する中身を切り替える機能（DI）」をそのまま使って、テストの時だけ偽物を流し込んでいるのです
+
+
+npm run build なら　
+このbuild の部分が 
+script{  "build": "nest build" }  内部で　nest build が動く。
+scriptをみれば、
+起動方法
+テスト方法
+ビルド方法
+Lint方法　　　等が分かる。
+　
+プロジェクト　npm run test　　　実行(package.json で記載したコマンドで実行できる)
+
+> nest_backserver@0.0.1 test
+> jest
+
+ PASS  src/modules/message/application/message.service.spec.ts
+  MessageService (単体テスト)
+    ✓ メッセージが正常に保存され、その結果が返ってくること (10 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        0.83 s
+Ran all test suites.
+ep24025@LAPTOP-SULE0142:~/nest_backserver$ 
+
+～内部の仕組み～
+
+Test.createTestingModule を使って、MessageService をテストするためだけの「極小のDIコンテナ」をメモリ上に一瞬で作りました。
+本物のデータベースに繋がるリポジトリ(infrastrucuture)ではなく、中身が空っぽのMockリポジトリを MessageService にガチャンと結合（DI）させました。
+
+以降～
+
+ブランチを　機能単位や　やりたいこと事に切って、
+コミットは細かくします。
+
+git hub Actionsで「CI」を構築する
+
+package.jsonが存在する箇所にフォルダとファイル　
+
+.github/workflows/ci.yml
+
+ci が動いているか　確認するためにaction タブを確認する。
+
+ESlint　によるエラーで ci のテストが　通らない。　コードをAIに修正後、push 
+実際のdbを使っていないので、async  書いていてもawait していなかったり　した箇所などを修正。
+
+step3 aws デプロイ　cd　構築をする。
+1⃣NestJSアプリを「Dockerコンテナ」としてパッケージ化し、AWSの ECS（Elastic Container Service）Fargate というサーバー管理不要のサービスで動かします。
+2⃣NestJSをサーバーレス関数（Lambda）として動かす構成です。リクエストが来た一瞬だけプログラムが起動して処理します。
+3⃣AWS上にLinuxの仮想サーバー（EC2）を1台借りて、その中にNode.jsを入れて動かす（サーバーのセキュリティ対策やプロセス管理　必要）
+今回は1⃣。　docker を使い、コンテナを作成する。
+プロジェクト直下に　Dockerfile + docker-compose.yml  
+
+クレジットカード登録や　課金はしたくないので、
+render にデプロイ　　language をdocker　に。 dockerfile を作成。
+
+render は自動でmain にpush されると自動でデプロイする。ciテストが通った時だけ、デプロイされるようにci.yml ファイルを変更。
+
+この場合、テスト通った時に、render にデプロイ。　GitHub Secrets　に記載。
+① [ GitHub Actions  ] 特定条件下の時にweb hook （リクエスト）送る。    (Deploy HookのURL)  ⇒　render 
+
+render envriomnet （render の方の環境変数はプロジェクトで用いられる環境変数等です）
+
+～現状の流れ～
+1. アプリケーションの土台とDDD風アーキテクチャの構築
+最初に、ディレクトリを機能単位（modules/message）で分割し、DDDの思想を取り入れた階層構造を作成しました。
+
+src/modules/message/domain/repository-interface/message.repository.interface.ts の作成
+やったこと: TypeScriptの interface はJavaScriptへのコンパイル時に消滅してNestJSのDIで使えなくなるため、あえて abstract class（抽象クラス） を使ってインターフェースを定義しました。これにより、JS実行時にも型情報を残し、DIP（依存性逆転の原則）を綺麗に成立させました。
+
+src/modules/message/infrastructure/message.repository.ts の作成
+やったこと: 上記の抽象クラスを implements し、実際のDB保存処理（まずは console.log のモック）を担当する具体的なインフラ層のクラスを実装しました。
+
+src/modules/message/application/message.service.ts の作成
+やったこと: ビジネスロジックを担うユースケース層を実装しました。コンストラクタで抽象クラス（インターフェース）に依存させることで、具体的なリポジトリの実装に依存しない、疎結合な設計にしました。
+
+src/modules/message/presentation/dto/ の作成 ＆ nestjs-zod の導入
+やったこと: npm install zod nestjs-zod を実行し、Zodを用いたDTOクラスを作成。フロントから送られてくる body.text をコントローラーに入る手前で検証（バリデーション）し、不正なリクエストを本番環境（ランタイム）で確実に弾く仕組み（Zod Pipe）を構築しました。
+
+src/modules/message/message.module.ts の編集
+やったこと: NestJSのDIコンテナ設定ファイルに、抽象クラス（トークン）と具体的なインフラ層クラスを結びつける記述（provide: IMessageRepository, useClass: MessageRepository）を追加し、アプリ全体をガチャンと結合しました。
+
+2. 単体テストの実装
+インフラ層（実際のデータベース）に依存せず、ロジックだけを高速にテストする環境を作りました。
+
+src/modules/message/application/message.service.spec.ts の編集
+やったこと: Test.createTestingModule を使用して、メモリ上にテスト用の極小DIコンテナを作成。本物の MessageRepository ではなく、jest.fn() で作った中身が空っぽの Mock（偽物）を注入 することで、データベースなしで1秒未満で終わるクリーンな単体テストを成功させました。
+
+package.json の確認とテスト実行
+やったこと: npm run test を実行。内部で jest が動き、作成した単体テストが正常に PASS することを確認しました。
+
+3. CI/CDパイプラインの構築（自動化と防衛線の設置）
+コードをGitHubにプッシュした際、テストに合格した安全なコードだけをRenderへ自動デプロイする仕組みを作りました。
+
+Renderダッシュボードでの設定変更
+やったこと: 予期せぬエラーコードが即デプロイされるのを防ぐため、Renderの「Settings」から 「Auto Deploy」を No に変更。同時に、外部からデプロイを命令するための 「Deploy HookのURL」をコピー しました。
+
+GitHubリポジトリの設定変更
+やったこと: コピーしたRenderのURLを隠すため、GitHubの画面から Settings -> Secrets and variables -> Actions を開き、Repository Secrets に環境変数 RENDER_DEPLOY_HOOK_URL としてURLを安全に登録 しました。
+
+.github/workflows/ci.yml の作成・編集
+やったこと: GitHub Actionsのワークフローファイルを編集。前半のジョブに npm run lint と npm run test を設定し、それらが 100%成功した時だけ、後半のデプロイジョブで curl -X POST を使ってGitHub SecretsのURLを叩く という「CIからCDへのリレー」を記述しました。
+
+ESLintエラー（不正な全角スペース）の修正と初デプロイ成功
+やったこと: コピペの際に混入した「目に見えない特殊なスペース」を検知してCIがデプロイをブロックしたため、ファイルを綺麗に修正。再度 git push し、CIのテスト合格を経て、Renderへのコンテナ自動デプロイ（CD）を完全成功させました。
+
+render envriomnet （render の方の環境変数はプロジェクトで用いられる環境変数等です）
+
+～今後の方針（git hub isuue の方を参考）～
+ci単体テストを実装したので、結合テストを実装する。
+共通ログミドルウェアの実装（renderはec2,ecs（サーバーとコンテナ管理等）、DNS(https://nest-backserver.onrender.com )、　ロードバランサー・SSL化（https）、linux 側のsysted等の 標準出力(console.log)などのOS(linux)側の設定　を行う。ので、ログ設計に関しては、console.log(json)で出力することや　ログを保存するための別の　サーバーを用意すること　で良い。ログをcontoroler で管理すると大変なので（機能事のcontoroler で管理する羽目になるため）middware で共通化処理として　差し込むのが普通。　また、nginx 等のリバースプロキシを導入したり、render ではスケールアウト時には、　手動スケールか、自動スケールが存在する。スケールアウト時に考えるべきことは　複数サーバー間での　共通状態を保持できるようにすること　や、セッション方式ではなく、redis 等にセッション情報を格納するか、JWT を用いる。例えば、バッチ処理等　の場合、どのサーバーがバッチ処理を行ったかなどの状態を　redis 等を使ったり、DB等に保存したりする。）
+
+
+
+今後は何をしたかを簡潔にここに書く。
+
+ということで、次は共通処理ミドルウエア　の実装をする。
+
+～共通処理　ログ　ミドルウエア intercepter ～
+まず、ブランチをgit hub  flow にのっとり　切る。
+feature/issue_10_middlware を切る。
+src/common/interceptors/logging.interceptor.ts　ファイルを作成。記載。
+src/main.ts　　ファイルを編集。app.useGlobalInterceptors(new LoggingInterceptor());
+npm run start:dev  ローカルでnest.js 起動。
+post リクエスト（json text : " "）を送って、　標準出力に出るか確認。
+
+curl -X POST http://localhost:3000/message   -H "Content-Type: application/json"   -d '{"text":"こんにちは！"}'
+
+npm run start:dev した方のサーバーのプロセスの方で以下のログを確認。
+{"timestamp":"2026-06-15T12:46:04.057Z","level":"INFO","type":"REQUEST","method":"POST","url":"/message","body":{"text":"こんにちは！"}}
+DB保存: こんにちは！
+{"timestamp":"2026-06-15T12:46:04.060Z","level":"INFO","type":"RESPONSE","method":"POST","url":"/message","statusCode":201,"responseTimeMs":2}
+
+
+～きずいた点やなどコードの詳細はコメントに書く～
+NestJS では Middleware → Guard → Interceptor → Pipe → Controller → Service (repository)→ Interceptor（レスポンス）  の流れ。
+インターセプタ―はリクエストとレスポンスを両方触れる。
+他の言語やフレームワークでもmiddlware　でログ等共通処理を実装する。理由はcontoroler にログ出力責任（機能）を設けると　職務が汚れるため　行わない。
+
+実務では上記のログを専用のサーバー（DB）などに保持する。また、ログのレベル（level（INFO / ERROR））に応じてslack 等に通知を発火する（webhook）等を行う。
+
+timestamp（時刻）
+level（INFO / ERROR）
+type（REQUEST / RESPONSE）
+method（POST）
+url（/message）
+body（リクエスト内容）
+statusCode（レスポンス）
+responseTimeMs（処理時間）   各ログ一覧。
+
+～ エラー～
+main  にマージというのは　そのブランチは確定したということ。
+ciテストに通っていないのに、マージできるようになっていた（初期設定）のため、ciテストに通った時のみmain にマージできるように設定しよう。
+
+git checkout -b fix/logging-error　修正用のブランチを切る
+
+
+~ciテスト通過時のみmain マージ許可設定～
+ciテストに通っていないのに、マージできるようになっていた（初期設定）のため、ciテストに通った時のみmain にマージできるように設定しよう。
+→完了
+
+～レートリミット実装、requwst_id 発行を実装～
+ブランチは
+feature/request_id_intercepterを切る。
+（ローカルのgit を更新して　やるという　のを知らず行っていたため　これ以降はマージ後　pull します）

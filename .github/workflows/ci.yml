@@ -1,0 +1,54 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # ==========================================
+  # 1. 継続的インテグレーション (CI) ジョブ
+  # ==========================================
+  #↓　テストの名称
+  test-and-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Lint
+        run: npm run lint
+
+      - name: Run Unit Tests
+        run: npm run test
+
+  # ==========================================
+  # 2. 継続的デリバリー (CD) ジョブ（新設！）
+  # ==========================================
+  deploy:
+    runs-on: ubuntu-latest
+    # ★ここがプロの技！「test-and-lintが成功した時だけ実行する」
+    # =========================================================================
+    # 【条件①】GitHub Actionsの鉄の原則：「needs」による依存関係の定義
+    # test-and-lint が成功しないと　needs　ubuntu-latest が実行されない。
+    # =========================================================================
+    needs: test-and-lint
+    #  if  で前提条件としてのciテスト通過　＋　もし、main にpush された時
+    # mainブランチへのプッシュ（またはマージ）の時だけ動かす（PRの時点ではデプロイさせない）
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Trigger Render Deploy
+        run: |
+          curl -X POST "${{ secrets.RENDER_CD_DEPLOY_HOOK_URL }}"

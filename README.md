@@ -96,3 +96,7 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## ブランチ運用
+
+新しいブランチは必ず最新のmainから作成する。PR作成→main マージ　→ローカルmain 更新　　の流れ
