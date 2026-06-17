@@ -1,102 +1,339 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# NestJS DDD Practice Project
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 概要
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+このプロジェクトは、NestJSを用いてバックエンド開発の実践経験を積むための学習用プロジェクトです。
 
-## Description
+単純なCRUD実装だけではなく、
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+* DDD（Domain Driven Design）寄りのアーキテクチャ
+* DIP（依存性逆転の原則）
+* DI（Dependency Injection）
+* DTO + Zod によるバリデーション
+* Mockを利用した単体テスト
+* GitHub Flow
+* GitHub Actions による CI
+* Docker 化
+* AWS / Render へのデプロイ
 
-## Project setup
+を一通り体験することを目的としています。
 
-```bash
-$ npm install
+---
+
+# このプロジェクトを作った理由
+
+実務では単にAPIを作るだけでなく、
+
+* 保守しやすいアーキテクチャ設計
+* テストしやすい設計
+* CI/CD
+* クラウド環境へのデプロイ
+
+が求められます。
+
+そのため、本プロジェクトでは機能開発そのものよりも、
+
+「実務でよく使われる開発手法を体験する」
+
+ことを主な目的としています。
+
+---
+
+# 使用技術
+
+## Runtime
+
+* Node.js
+
+## Framework
+
+* NestJS v11 (11.1.19)
+
+## Language
+
+* TypeScript
+
+## Validation
+
+* Zod
+* nestjs-zod
+
+## Testing
+
+* Jest
+
+## Container
+
+* Docker
+* Docker Compose
+
+## CI/CD
+
+* GitHub Actions
+
+## Cloud
+
+* AWS（学習予定）
+* Render（デプロイ検証用）
+
+---
+
+# アーキテクチャ
+
+DDD（Domain Driven Design）を参考にしたレイヤードアーキテクチャを採用しています。
+
+```text
+src/
+├── main.ts
+├── app.module.ts
+│
+├── modules/
+│   └── message/
+│
+│       ├── presentation/
+│       │   ├── message.controller.ts
+│       │   └── dto/
+│
+│       ├── application/
+│       │   └── message.service.ts
+│
+│       ├── domain/
+│       │   ├── entities/
+│       │   ├── value-objects/
+│       │   ├── domain-services/
+│       │   └── repository-interface/
+│
+│       ├── infrastructure/
+│       │   └── config/
+│
+│       └── message.module.ts
+│
+├── common/
+│   ├── infra/
+│   ├── utils/
+│   └── middleware/
+│
+└── config/
 ```
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ npm run start
+# 設計方針
 
-# watch mode
-$ npm run start:dev
+## DIP（依存性逆転の原則）
 
-# production mode
-$ npm run start:prod
+ServiceはRepositoryの具体実装に依存せず、抽象に依存します。
+
+```text
+Service
+ ↓
+Repository Interface
+ ↑
+Repository Implementation
 ```
 
-## Run tests
+これにより、
 
-```bash
-# unit tests
-$ npm run test
+* DB実装の差し替え
+* Mock利用
+* テスト容易性向上
 
-# e2e tests
-$ npm run test:e2e
+を実現しています。
 
-# test coverage
-$ npm run test:cov
+---
+
+# 現在実装済み機能
+
+## Message API
+
+フロントエンドから送信されたテキストを受け取り、保存した結果を返却します。
+
+フロントからのリクエスト形式想定～
+{
+  "text": "こんにちは！"
+}
+これ以外の形式はzod によって、はじかれる。
+const CreateMessageSchema = z.object({
+  text: z.string().min(1).max(100),
+});
+
+
+処理フロー
+
+```text
+Client
+ ↓
+POST /message
+ ↓
+Controller
+ ↓
+DTO
+ ↓
+Zod Validation
+ ↓
+Service
+ ↓
+Repository
+ ↓
+Response
 ```
 
-## Deployment
+レスポンス例
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```json
+{
+  "message": "hello"
+}
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+# バリデーション
 
-Check out a few resources that may come in handy when working with NestJS:
+TypeScriptの型チェックだけでは実行時の検証ができません。
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+そのため、
 
-## Support
+* DTO
+* Zod
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+を組み合わせて実行時バリデーションを実施しています。
 
-## Stay in touch
+---
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# テスト
 
-## License
+## Unit Test
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 
 ## ブランチ運用
 
 新しいブランチは必ず最新のmainから作成する。PR作成→main マージ　→ローカルmain 更新　　の流れ
+Jestを利用しています。
+
+RepositoryはMockへ差し替えています。
+
+```text
+MessageService
+        ↓
+MockRepository
+```
+
+実際のDBには接続せず、Service単体を検証できます。
+
+実行
+
+```bash
+npm run test
+```
+
+---
+
+# GitHub Flow
+
+以下の運用を練習しています。
+
+```text
+main
+ ↑
+PR
+ ↑
+feature/*
+```
+
+例
+
+```bash
+git checkout -b feature/text_uketori_hozon_api
+```
+
+開発
+
+↓
+
+Push
+
+↓
+
+Pull Request
+
+↓
+
+Review
+
+↓
+
+Merge
+
+---
+
+# CI
+
+GitHub Actions を利用しています。
+
+Push時に自動で
+
+* Build
+* Test
+* Lint
+
+を実行します。
+
+設定ファイル
+
+```text
+.github/workflows/ci.yml
+```
+
+---
+
+# CD
+render にデプロイ。（aws はクレジットカード登録したくないので一旦render）
+ciテスト通過時に、render にデプロイされるように、
+dockerfile を記載。
+
+---
+
+# Docker
+
+Dockerを利用して実行環境をコンテナ化しています。
+
+今後AWSやRenderへのデプロイで利用予定です。
+
+```bash
+docker compose up
+```
+
+---
+
+# 今後の予定
+
+* Mockを利用した単体テストの追加
+* Integration Test
+* Redisによるレート制限
+* ログ出力ミドルウェア
+* Docker環境整備
+* AWSデプロイ
+* Renderデプロイ
+* CD構築
+* DNS設定体験
+* ECS/Fargateの学習
+
+---
+
+# 学習目標
+
+このプロジェクトのゴールは完成したサービスを作ることではなく、
+
+* NestJS
+* DDD
+* DIP / DI
+* Unit Test
+* CI/CD
+* Docker
+* AWS
+
+を実際に手を動かしながら学ぶことです。
+
+そのため、機能追加よりもアーキテクチャや開発プロセスの理解を重視しています。

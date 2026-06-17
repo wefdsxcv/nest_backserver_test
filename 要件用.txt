@@ -1,26 +1,64 @@
-目的ci/cd aws docker 練習およびアーキテクチャ　domain 層などの練習。依存性逆転の原則を用いる。
+目的ci/cd aws 練習およびアーキテクチャ　domain 層などの練習。依存性逆転の原則を用いる。
 
 実行環境
 node.js
 フレームワーク
-nest.js 
+nest.js  NestJS v11（11.1.19）
 技術選定
-ci/cd docker aws
+ci/cd 構築、   awsでのポート、DNS設定等の体験
 
 階層構造
+src/
+  main.ts
+  app.module.ts   
+  modules/                     ← 機能単位
+    message/
+    
+     presentation/           ← Controller / HTTP / GraphQL
+        message.contoroller.ts
+        dto/                 ← API 入出力 DTO（ここに置くのが一般的）
+     application/            ← UseCase / DTO（入力・出力）/ ApplicationService
+        message.service.ts
+
+     domain/                 ← Entity / ValueObject / DomainService / Repository interface
+        entities/
+        value-objects/
+        domain-services/
+        repository-interface/         ← repository interface（抽象化）
+    
+     infrastructure/         ← Repository 具体的な実装 / ORM / SQL / 外部API
+        
+        config/               ← DB接続設定（ここに置くのが一般的）
+
+      message.module.ts       ← DI コンテナ（NestJS Module）
+
+  common/                     ← 全モジュール共通
+    infra/           ← DB/Redis など共通インフラ
+    utils/                    ← 共通関数・共通クラス
+    middleware/
 
 
-機能要件
+  config/                     ← アプリ全体の設定（.env, app config）
+  
+
+機能要件（練習したいこと）
+フロントから　body 値　⇒　dto zod で検証　⇒　保存した結果をbody に入れてレスポンス
+
+
 デプロイ練習　単体テスト　mock 　できたら結合テスト
-git hub flow にもとずき、git hub ブランチ分け
-なので、層構造。
 
-アーキテクチャ　domain層
+アーキテクチャ　DDD寄りのアーキテクチャ
 
-ミドルウェア   jwt認証　　レート制限　　Redis　
+ミドルウェア   レート制限(redis)　　ログなど
 
-ログ
 
+Nest CRUD
+DTO/Zod
+DI
+Middleware
+
+AWS
+CI/CD　を体験するのが目的。アーキテクチャ順守のプロジェクト構成の体験。ci/cd 構築　テストが主。
 
 非機能要件
 なし

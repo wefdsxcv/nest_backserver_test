@@ -1,5 +1,4 @@
-
-
+2026/04/30
 git hub flow にのっとり、　git hub 
 ~github flow ~
 main 完成用　feature機能開発push用ブランチ
@@ -244,6 +243,7 @@ ci単体テストを実装したので、結合テストを実装する。
 ということで、次は共通処理ミドルウエア　の実装をする。
 
 ～共通処理　ログ　ミドルウエア intercepter ～
+～共通処理　ログ　ミドルウエア～
 まず、ブランチをgit hub  flow にのっとり　切る。
 feature/issue_10_middlware を切る。
 src/common/interceptors/logging.interceptor.ts　ファイルを作成。記載。
@@ -290,3 +290,4 @@ ciテストに通っていないのに、マージできるようになってい
 ブランチは
 feature/request_id_intercepterを切る。
 （ローカルのgit を更新して　やるという　のを知らず行っていたため　これ以降はマージ後　pull します）
+～ESlint エラー～
