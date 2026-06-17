@@ -10,10 +10,7 @@ jobs:
   # ==========================================
   # 1. 継続的インテグレーション (CI) ジョブ
   # ==========================================
-<<<<<<< HEAD
   #↓　テストの名称
-=======
->>>>>>> origin/main
   test-and-lint:
     runs-on: ubuntu-latest
 
@@ -49,7 +46,6 @@ jobs:
     needs: test-and-lint
     #  if  で前提条件としてのciテスト通過　＋　もし、main にpush された時
     # ★ここがプロの技！「test-and-lintが成功した時だけ実行する」という依存関係を定義
-    needs: test-and-lint
     # mainブランチへのプッシュ（またはマージ）の時だけ動かす（PRの時点ではデプロイさせない）
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
