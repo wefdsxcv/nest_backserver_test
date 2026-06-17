@@ -205,6 +205,11 @@ TypeScriptの型チェックだけでは実行時の検証ができません。
 
 ## Unit Test
 
+Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## ブランチ運用
+
+新しいブランチは必ず最新のmainから作成する。PR作成→main マージ　→ローカルmain 更新　　の流れ
 Jestを利用しています。
 
 RepositoryはMockへ差し替えています。
