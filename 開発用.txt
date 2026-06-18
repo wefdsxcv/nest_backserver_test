@@ -251,7 +251,10 @@ src/main.ts　　ファイルを編集。app.useGlobalInterceptors(new LoggingIn
 npm run start:dev  ローカルでnest.js 起動。
 post リクエスト（json text : " "）を送って、　標準出力に出るか確認。
 
-curl -X POST http://localhost:3000/message   -H "Content-Type: application/json"   -d '{"text":"こんにちは！"}'
+curl -X POST http://localhost:3000/message \
+  -H "Content-Type: application/json" \
+  -d '{"text":"こんにちは！"}'
+
 
 npm run start:dev した方のサーバーのプロセスの方で以下のログを確認。
 {"timestamp":"2026-06-15T12:46:04.057Z","level":"INFO","type":"REQUEST","method":"POST","url":"/message","body":{"text":"こんにちは！"}}
@@ -287,7 +290,16 @@ ciテストに通っていないのに、マージできるようになってい
 →完了
 
 ～レートリミット実装、requwst_id 発行を実装～
+リクエスト追記（Request ID / Trace ID）の導入
+どのHTTPリクエストに対して起きた出来事なのか　を追跡するために Request ID を付ける 。　　　request_id は一意のID を付与して識別する。
+
 ブランチは
 feature/request_id_intercepterを切る。
 （ローカルのgit を更新して　やるという　のを知らず行っていたため　これ以降はマージ後　pull します）
-～ESlint エラー～
+npm install uuid
+npm install --save-dev @types/uuid     uuid ライブラリを導入。
+curl -X POST http://localhost:3000/message \
+
+pushする前にciテストをローカルで実行し、確認。
+npm run lint
+npm run test
