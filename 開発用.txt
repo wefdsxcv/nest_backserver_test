@@ -325,3 +325,31 @@ traceIDはphase9のマルチサービスに移行した際におこなう。
 
 feature/request_id_txt ブランチを切って　request_id　実装での開発メモ　内容を　push する。開発メモなど変更した場合も、　ブランチを切ってpush し、PRを作成してmain にマージさせる。
 ～ヘルスチェック（Health Check）エンドポイントの追加（/health）～
+git checkout main
+git pull origin main をまずして、リモートのmainの最新状態を　取り込む。チーム開発では他人がマージしていて、自分のローカルのmain が古い可能性があるため。
+
+まず、ブランチを切る。feature/health_check_EndPoint
+
+！今回の実装の注意点！
+return this.health.check([]);
+とコードではなっており、nest.js サーバーが正常に起動しており、GET /healthリクエストが来た時に、200 OKレスポンスが返ってくるか　だけを確認している。
+DB
+Redis
+メッセージキュー　　　　　　などの接続チェック等は行っていない。
+
+npm install @nestjs/terminus
+
+npx nest g module health
+npx nest g controller health
+
+health.controller.ts の編集。
+
+npm run start:dev　でサーバーを起動し、http://localhost:3000/health　叩いて　確認する。
+
+curl -X GET http://localhost:3000/health
+{"status":"ok","info":{},"error":{},"details":{}}　　を確認。このサーバーが生きているかのヘルスチェックエンドポイントを作成できた。
+
+npm run lint 
+npm run test 
+
+health.controller.spec.tsファイルをエラーが出ないように編集。
