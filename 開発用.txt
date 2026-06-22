@@ -348,3 +348,8 @@ npm run start:dev　でサーバーを起動し、http://localhost:3000/health�
 
 curl -X GET http://localhost:3000/health
 {"status":"ok","info":{},"error":{},"details":{}}　　を確認。このサーバーが生きているかのヘルスチェックエンドポイントを作成できた。
+
+npm run lint 
+npm run test 
+
+health.controller.spec.tsファイルをエラーが出ないように編集。
