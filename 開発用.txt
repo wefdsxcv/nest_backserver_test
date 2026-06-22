@@ -284,12 +284,11 @@ ciテストに通っていないのに、マージできるようになってい
 
 git checkout -b fix/logging-error　修正用のブランチを切る
 
-
 ~ciテスト通過時のみmain マージ許可設定～
 ciテストに通っていないのに、マージできるようになっていた（初期設定）のため、ciテストに通った時のみmain にマージできるように設定しよう。
 →完了
 
-～レートリミット実装、requwst_id 発行を実装～
+～request_id 発行を実装～
 リクエスト追記（Request ID / Trace ID）の導入
 どのHTTPリクエストに対して起きた出来事なのか　を追跡するために Request ID を付ける 。　　　request_id は一意のID を付与して識別する。
 
@@ -298,8 +297,31 @@ feature/request_id_intercepterを切る。
 （ローカルのgit を更新して　やるという　のを知らず行っていたため　これ以降はマージ後　pull します）
 npm install uuid
 npm install --save-dev @types/uuid     uuid ライブラリを導入。
-curl -X POST http://localhost:3000/message \
 
-pushする前にciテストをローカルで実行し、確認。
-npm run lint
-npm run test
+logging.interceptor.tsファイルを編集。ファイルのコメントを記載。
+
+npm run start:dev　　　でサーバー起動。
+
+curl でpost リクエストを叩く。
+curl -X POST http://localhost:3000/message \
+  -H "Content-Type: application/json" \
+  -d '{"text":"こんにちは！"}'
+
+＝サーバー側プロセスの標準出力＝
+1回目
+{"requestId":"723e5c54-f475-435c-8150-f6f8a61b181a","timestamp":"2026-06-18T08:36:41.939Z","level":"INFO","type":"REQUEST","method":"POST","url":"/message","body":{"text":"こんにちは！"}}
+DB保存: こんにちは！
+{"requestId":"723e5c54-f475-435c-8150-f6f8a61b181a","timestamp":"2026-06-18T08:36:41.941Z","level":"INFO","type":"RESPONSE","method":"POST","url":"/message","statusCode":201,"responseTimeMs":2}
+2回目
+{"requestId":"d816c6af-3e49-4e82-9629-4224806c61bc","timestamp":"2026-06-18T08:38:04.338Z","level":"INFO","type":"REQUEST","method":"POST","url":"/message","body":{"text":"こんにちは！"}}
+DB保存: こんにちは！
+{"requestId":"d816c6af-3e49-4e82-9629-4224806c61bc","timestamp":"2026-06-18T08:38:04.339Z","level":"INFO","type":"RESPONSE","method":"POST","url":"/message","statusCode":201,"responseTimeMs":1}
+一意のID が同じリクエストレスポンス内で使われていることを確認。
+　
+Request ID: 「1つのサーバー内」で、リクエストが入ってから出るまでを追いかけるためのもの。
+Trace ID: 分散システムやマイクロサービス環境で、「Aサーバー ➔ Bサーバー ➔ Cサーバー」と複数のサーバーを横断する一連の処理を1つにまとめるためのもの。
+
+traceIDはphase9のマルチサービスに移行した際におこなう。
+
+feature/request_id_txt ブランチを切って　request_id　実装での開発メモ　内容を　push する。開発メモなど変更した場合も、　ブランチを切ってpush し、PRを作成してmain にマージさせる。
+～ヘルスチェック（Health Check）エンドポイントの追加（/health）～
