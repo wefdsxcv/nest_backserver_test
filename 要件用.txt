@@ -62,3 +62,26 @@ CI/CD　を体験するのが目的。アーキテクチャ順守のプロジェ
 
 非機能要件
 なし
+
+
+～git hub コメントつけ方　見本～
+## 概要
+Request IDによるログ追跡機能を追加
+
+## 背景
+複数ユーザーから同時アクセスがあった場合、
+REQUESTログとRESPONSEログを紐付けられなかったため。
+
+## 変更内容
+- Request ID生成
+- LoggingInterceptorへ追加
+- REQUESTログへ出力
+- RESPONSEログへ出力
+
+## 動作確認
+- [x] lint
+- [x] unit test
+- [x] API動作確認
+
+## スクリーンショット
+（必要なら画像）
