@@ -380,3 +380,5 @@ curl -X GET http://localhost:3000/health
 curl -X GET http://localhost:3000/health
 {"statusCode":429,"message":"ThrottlerException: Too Many Requests"}
 
+bootstrap();
+

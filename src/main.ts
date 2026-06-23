@@ -14,4 +14,8 @@ async function bootstrap() {
 
   await app.listen(3000);
 }
-bootstrap();
+// main.ts の一番下をこう書き換える
+bootstrap().catch((err) => {
+  console.error('Application failed to start:', err);
+  process.exit(1);
+});
