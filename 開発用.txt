@@ -353,3 +353,30 @@ npm run lint
 npm run test 
 
 health.controller.spec.tsファイルをエラーが出ないように編集。
+
+～レートリミット実装～
+feature/rate_limitブランチを切る。
+npm install @nestjs/throttler　をインストール。
+
+app.module.ts を編集。
+// ★追加: 1分間（60000ms）に最大10回までの制限を設定
+ThrottlerModule.forRoot([
+  {
+    ttl: 60000,
+    limit: 10,
+  },
+]),
+
+src/main.ts ファイルを編集。
+app.modules ファイルを編集。
+
+レートリミット　確認のために
+curl -X GET http://localhost:3000/health を limit = 10 としたので、リクエストを11回以上送ると以下に。
+
+curl -X GET http://localhost:3000/health
+{"status":"ok","info":{},"error":{},"details":{}}変わっていないため、（nest.js の前身であるexpress はリクエスト元のIPアドレスを正確に追跡・信頼しない設定のため、手前のインフラ（renderを使用しているので、render側のLBとか。）のグローバルIPを信頼するように変更。
+
+11回目のリクエストで　以下のログを確認。
+curl -X GET http://localhost:3000/health
+{"statusCode":429,"message":"ThrottlerException: Too Many Requests"}ep24025@LAPTOP-SULE0142:~/nest_backserver$ 
+
