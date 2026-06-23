@@ -1,16 +1,21 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { LoggingInterceptor } from './common/interceptors/logging.interceptor'; // 追加
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { NestExpressApplication } from '@nestjs/platform-express'; // ★追加: 型定義をインポート
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // ★型を NestExpressApplication に指定して作成
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // ★これを1行追加するだけで、すべてのAPIの入り口と出口に共通ログが差し込まれます！
+  // ★追加: 外部（またはローカル）から渡されるIPアドレスを正しく信頼する設定
+  app.set('trust proxy', true);
+
   app.useGlobalInterceptors(new LoggingInterceptor());
 
-  await app.listen(3000); //port 3000解放
+  await app.listen(3000);
 }
-
-//const p = bootstrap    async bootstrap()なので、async で非同期、promise<void> を返す。なので、.catch(error)エラーキャッチするか。await を明記
-//void で返り値は無しを明示。
-void bootstrap();
+// main.ts の一番下をこう書き換える
+bootstrap().catch((err) => {
+  console.error('Application failed to start:', err);
+  process.exit(1);
+});
