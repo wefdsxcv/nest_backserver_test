@@ -378,5 +378,5 @@ curl -X GET http://localhost:3000/health
 
 11回目のリクエストで　以下のログを確認。
 curl -X GET http://localhost:3000/health
-{"statusCode":429,"message":"ThrottlerException: Too Many Requests"}ep24025@LAPTOP-SULE0142:~/nest_backserver$ 
+{"statusCode":429,"message":"ThrottlerException: Too Many Requests"}
 

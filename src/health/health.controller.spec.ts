@@ -15,7 +15,7 @@ describe('HealthController', () => {
           useValue: {
             // Controller内で呼び出しているメソッドがあればここにモック関数を定義します
             // 例: check: jest.fn().mockResolvedValue({ status: 'ok' })
-            check: jest.fn(),//[undefined を返すだけの空っぽの関数」をjestが自動で身代わりとして作ってくれます。
+            check: jest.fn(), //[undefined を返すだけの空っぽの関数」をjestが自動で身代わりとして作ってくれます。
           },
         },
       ],
