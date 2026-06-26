@@ -380,5 +380,12 @@ curl -X GET http://localhost:3000/health
 curl -X GET http://localhost:3000/health
 {"statusCode":429,"message":"ThrottlerException: Too Many Requests"}
 
-bootstrap();
+～db設定postgresql データ挿入。phase 2～
+ feature/phase2-db-setupブランチを切る。
+ docker-composeファイルを編集。　 postgres:15-alpine　を使用し、コンテナを立てる。
+docker compose up -d　　docker を使用し、posgre のコンテナをローカルで起動する。　　　　　
+＃ volumes:　      
+- postgres_data:/var/lib/postgresql/data　この右側のパスは「PostgreSQLのコンテナ（仮想のLinuxマシン）の中」に存在するパスになります。
+左側。こちらはコンテナの中ではなく、「あなたのPC（正確にはWSL2のLinux領域）の中」にある、Dockerが管理する安全な保存エリアです。ここにコンテナ内のデータを保存するため、コンテナが消えてもデータを保持することができます。
+
 
