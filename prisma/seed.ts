@@ -1,6 +1,14 @@
 import { PrismaClient } from '@prisma/client';
+import config from '../prisma.config'; // 設定の読み込みはそのまま
 
-const prisma = new PrismaClient();
+// ★修正: config オブジェクトを丸ごと渡すのではなく、中の datasource.url だけを明示的に指定します
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: config.datasource?.url,
+    },
+  },
+});
 
 async function main() {
   console.log('🌱 5万件のダミーデータを生成中...');

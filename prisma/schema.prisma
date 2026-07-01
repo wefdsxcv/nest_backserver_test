@@ -1,25 +1,18 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js" // ★ここを "prisma-client-js" にしておきます
 }
 
 datasource db {
   provider = "postgresql"
+  // url = env("DATABASE_URL") 👈 ★もし残っていたら、この行は完全に削除（またはコメントアウト）します
 }
 
-// 既存の datasource や generator の記述はそのまま残してください
-
-// ★ここから追記
 model Message {
-  id        Int      @id @default(autoincrement()) // 主キー（自動連番）
-  text      String   @db.VarChar(255)              // メッセージ本文（最大255文字）
-  userId    Int      @map("user_id")               // 誰が送ったか（ユーザーID）
-  createdAt DateTime @default(now()) @map("created_at") // いつ送ったか（作成日時）
+  id        Int      @id @default(autoincrement())
+  text      String   @db.VarChar(255)
+  userId    Int      @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  @@map("messages") // 実際のデータベース内でのテーブル名を「messages」にする
+  @@map("messages")
 }
+
