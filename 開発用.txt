@@ -388,4 +388,96 @@ docker compose up -d　　docker を使用し、posgre のコンテナをロー�
 - postgres_data:/var/lib/postgresql/data　この右側のパスは「PostgreSQLのコンテナ（仮想のLinuxマシン）の中」に存在するパスになります。
 左側。こちらはコンテナの中ではなく、「あなたのPC（正確にはWSL2のLinux領域）の中」にある、Dockerが管理する安全な保存エリアです。ここにコンテナ内のデータを保存するため、コンテナが消えてもデータを保持することができます。
 
+# 必要パッケージのインストール
+npm install @prisma/client
+npm install --save-dev prisma
 
+# Prismaの初期設定を実行
+npx prisma init
+
+プロジェクト直下に .env ファイルと prisma/schema.prisma ファイルが自動生成されたのを確認。
+
+.envファイルに環境変数として、DATABASE_URL="postgresql://postgres:password@localhost:5432/nest_db?schema=public"記載。
+（DATABASE_URL="postgresql://postgres:password（ユーザー名）@localhost:5432（ポート番号）/nest_db（コンテナ名）?schema=public（PostgreSQL はデフォルトで public というスキーマ））
+docker-compose.ymlファイルにユーザー名、パスワード、DB名（コンテナ名）記載。
+environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: nest_db　　　
+
+prisma/schema.prismaファイル下部に以下の内容を記載。（TS　userId。Prisma schema	userId @map("user_id")SQL（DB）	user_idでもおけ）
+// ★ここから追記
+model Message {
+  id        Int      @id @default(autoincrement()) // 主キー（自動連番）
+  text      String   @db.VarChar(255)              // メッセージ本文（最大255文字）
+  userId    Int      @map("user_id")               // 誰が送ったか（ユーザーID）
+  createdAt DateTime @default(now()) @map("created_at") // いつ送ったか（作成日時）
+
+  @@map("messages") // 実際のデータベース内でのテーブル名を「messages」にする
+}
+
+npx prisma migrate dev --name init_messages　を叩く。（これでprisma がprisma スキーマファイルを参照し、sql を作って、実行し、postgresql の中にmessage テーブルができる。）
+
+prisma フォルダの直下に、新しく seed.ts というファイルを作成し、以下のコードを記述 .
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log('🌱 5万件のダミーデータを生成中...');
+
+  const totalRecords = 50000;
+  const dummyMessages: Array<{ text: string; userId: number; createdAt: Date }> = [];
+  const baseDate = new Date();
+
+  for (let i = 1; i <= totalRecords; i++) {
+    // 1〜500までのユーザーIDをランダムに割り振る（インデックスの検証用）
+    const randomUserId = Math.floor(Math.random() * 500) + 1;
+    
+    // 日時も少しずつズラして生成する（ORDER BY の検証用）
+    const dummyDate = new Date(baseDate.getTime() - i * 1000);
+
+    dummyMessages.push({
+      text: `これはテストメッセージ番号 ${i} です。`,
+      userId: randomUserId,
+      createdAt: dummyDate,
+    });
+  }   //５万回ループしてデータを作成。
+
+  console.log('💾 データベースへ一括挿入（バルクインサート）を開始します...');
+  
+  // ★重要: Prismaの createMany を使うことで、5万件を1回のSQLで高速挿入します
+  await prisma.message.createMany({
+    data: dummyMessages,
+  });
+
+  console.log('✨ 5万件のダミーデータの挿入が完了しました！');
+}
+
+main()
+  .catch((e) => {
+    console.error('❌ シードの実行に失敗しました:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+
+✔ 1. prisma.config.ts を開く
+prisma.config.ts は npx prisma init で生成されたファイル。
+
+✔ 2. migrations.seed を追加する
+import { defineConfig } from '@prisma/cli';
+
+export default defineConfig({
+  migrations: {
+    seed: 'ts-node prisma/seed.ts',
+  },
+  datasource: {
+    url: process.env.DATABASE_URL,
+  },
+});
+
+(エラー)
+migrate を使うなら、prisma.config.ts に datasource.url を書いてね。
+schema.prisma の datasource はもう使わないよ。
