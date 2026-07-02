@@ -1,0 +1,9 @@
+npm run lint
+
+ESLint による構文チェック
+
+3. Unit Test（単体テスト）
+npm run test
+
+Jest による単体テスト      
+src/*/.spec.ts を実行

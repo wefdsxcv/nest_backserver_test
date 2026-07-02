@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-js" // ★ここを "prisma-client-js" にしておきます
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  // url = env("DATABASE_URL") 👈 ★もし残っていたら、この行は完全に削除（またはコメントアウト）します
+  url      = env("DATABASE_URL") // ★ここに復活！
 }
 
 model Message {
@@ -15,4 +15,3 @@ model Message {
 
   @@map("messages")
 }
-

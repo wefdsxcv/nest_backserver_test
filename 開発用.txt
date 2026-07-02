@@ -381,8 +381,8 @@ curl -X GET http://localhost:3000/health
 {"statusCode":429,"message":"ThrottlerException: Too Many Requests"}
 
 ～db設定postgresql データ挿入。phase 2～
- feature/phase2-db-setupブランチを切る。
- docker-composeファイルを編集。　 postgres:15-alpine　を使用し、コンテナを立てる。
+feature/phase2-db-setupブランチを切る。
+docker-composeファイルを編集。　 postgres:15-alpine　を使用し、コンテナを立てる。
 docker compose up -d　　docker を使用し、posgre のコンテナをローカルで起動する。　　　　　
 ＃ volumes:　      
 - postgres_data:/var/lib/postgresql/data　この右側のパスは「PostgreSQLのコンテナ（仮想のLinuxマシン）の中」に存在するパスになります。
@@ -419,97 +419,16 @@ model Message {
 npx prisma migrate dev --name init_messages　を叩く。（これでprisma がprisma スキーマファイルを参照し、sql を作って、実行し、postgresql の中にmessage テーブルができる。）
 
 prisma フォルダの直下に、新しく seed.ts というファイルを作成し、以下のコードを記述 .
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-
-async function main() {
-  console.log('🌱 5万件のダミーデータを生成中...');
-
-  const totalRecords = 50000;
-  const dummyMessages: Array<{ text: string; userId: number; createdAt: Date }> = [];
-  const baseDate = new Date();
-
-  for (let i = 1; i <= totalRecords; i++) {
-    // 1〜500までのユーザーIDをランダムに割り振る（インデックスの検証用）
-    const randomUserId = Math.floor(Math.random() * 500) + 1;
-    
-    // 日時も少しずつズラして生成する（ORDER BY の検証用）
-    const dummyDate = new Date(baseDate.getTime() - i * 1000);
-
-    dummyMessages.push({
-      text: `これはテストメッセージ番号 ${i} です。`,
-      userId: randomUserId,
-      createdAt: dummyDate,
-    });
-  }   //５万回ループしてデータを作成。
-
-  console.log('💾 データベースへ一括挿入（バルクインサート）を開始します...');
-  
-  // ★重要: Prismaの createMany を使うことで、5万件を1回のSQLで高速挿入します
-  await prisma.message.createMany({
-    data: dummyMessages,
-  });
-
-  console.log('✨ 5万件のダミーデータの挿入が完了しました！');
-}
-
-main()
-  .catch((e) => {
-    console.error('❌ シードの実行に失敗しました:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
 
 ✔ 1. prisma.config.ts を開く
 prisma.config.ts は npx prisma init で生成されたファイル。
 
 ✔ 2. migrations.seed を追加する
-import { defineConfig } from '@prisma/cli';
-
-export default defineConfig({
-  migrations: {
-    seed: 'ts-node prisma/seed.ts',
-  },
-  datasource: {
-    url: process.env.DATABASE_URL,
-  },
-});
 
 (エラー)
-  "@prisma/client": "^7.8.0",
-  prisma 最新バージョンのため　生成AIが古い書き方を提示。エラー。
+"@prisma/client": "^7.8.0",
+prisma 最新バージョンのため　生成AIが古い書き方を提示。エラー。
 prisma.config.ts を修正。
-import { defineConfig } from '@prisma/config';
-import 'dotenv/config'; // ★これがないと .env から DATABASE_URL を読み込めません
-
-export default defineConfig({
-  schema: 'prisma/schema.prisma',
-  datasource: {
-    url: process.env.DATABASE_URL, // ★ここで接続URLを指定するルールになりました
-  },
-});
-
-schrma.prisma ファイル修正。
-generator client {
-  provider = "prisma-client-js" // ★ここを "prisma-client-js" にしておきます
-}
-
-datasource db {
-  provider = "postgresql"
-  // url = env("DATABASE_URL") 👈 ★もし残っていたら、この行は完全に削除（またはコメントアウト）します
-}
-
-model Message {
-  id        Int      @id @default(autoincrement())
-  text      String   @db.VarChar(255)
-  userId    Int      @map("user_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("messages")
-}
 
 ファイル　修正後、マイグレーション（スキーマファイル参照 → SQL を生成 → DB に反映）をおこなう。
 npx prisma generate
@@ -517,13 +436,8 @@ npx prisma generate
 # 2. データベースと同期（マイグレーション）をやり直す
 npx prisma migrate dev --name init_messages
 
-（エラー）seed.tsファイルを編集。
-
-import { PrismaClient } from '@prisma/client';
-import config from '../prisma.config'; // ★追加: ルートにある設定ファイルを読み込む
-
-// ★修正: 引数に config を渡して初期化するのが Prisma 7 の絶対ルールです
-const prisma = new PrismaClient(config); 
+（エラー）
+seed.tsファイルを編集。
 
 ファイル修正後、下記のコマンドをターミナル上で実行。
 
@@ -570,3 +484,62 @@ rm prisma/seed.js
 
 （エラー）
 やはり最新ばーじょん（"prisma": "^7.8.0",）のせいなのかどの生成AI(gemini,cahtgpt,copilot)もエラーしか出力しない。一度公式document を確認した方が良いか。？claudcode 等コーディングAI を用いるのも手か？
+
+prisma バージョンエラー対処。
+🛠️ 1. PostgreSQL 用ドライバーアダプターの導入
+Prisma 7がPostgreSQLへ直接生接続するために必要な公式パッケージを、一度だけプロジェクトにインストールします。
+
+npm install @prisma/adapter-pg pg
+npm install --save-dev @types/pg
+
+🛠️ 2. prisma/seed.ts の修正
+prisma/seed.ts ファイルを開き、上部の初期化コードをPrisma 7公式が推奨するアダプター結合方式に書き換えます。
+
+# 1. コンパイルを実行　
+npx tsc prisma/seed.ts --outDir prisma --target es2022 --module commonjs --moduleResolution node
+
+# 2. 生成された JavaScript を実行して5万件をバルクインサート！
+node prisma/seed.js
+
+# 3. jsファイルを消す。
+rm prisma/seed.js
+
+エラー。
+geminiはごり推しコンパイルをしようとしている。
+# --skipLibCheck をつけることで、node_modules 内のエラーを完全に無視して seed.js を出力します
+npx tsc prisma/seed.ts --outDir prisma --target es2022 --module commonjs --moduleResolution node --skipLibCheck
+
+# 実行
+node prisma/seed.js
+
+# お掃除
+rm prisma/seed.js
+
+公式document を与えても無理なので、バージョンダウンしてprisma 実装します。
+
+# 1. 不要になった PostgreSQL アダプターを削除
+npm uninstall @prisma/adapter-pg pg @types/pg
+
+# 2. Prisma 6.4.0 を指定して再インストール
+npm install @prisma/client@6.4.0
+npm install --save-dev prisma@6.4.0
+
+＃config ファイルを削除
+rm prisma.config.ts
+
+３. prisma/schema.prisma を元に戻す
+
+4.seed.ts 編集。
+
+5.下記コマンドを実行
+# 1. Prisma 6 のクライアントを生成
+npx prisma generate
+
+# 2. 念のためマイグレーションの同期を確認
+npx prisma migrate dev
+
+# 3. 型チェックをスキップして、安全にJavaScriptにコンパイルして実行
+npx tsc prisma/seed.ts --outDir prisma --target es2022 --module commonjs --moduleResolution node --skipLibCheck
+node prisma/seed.js
+rm prisma/seed.js
+

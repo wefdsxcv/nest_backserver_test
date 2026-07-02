@@ -1,14 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-import config from '../prisma.config'; // 設定の読み込みはそのまま
 
-// ★修正: config オブジェクトを丸ごと渡すのではなく、中の datasource.url だけを明示的に指定します
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: config.datasource?.url,
-    },
-  },
-});
+// Prisma 6では、引数なしのこれで自動的に .env の DATABASE_URL を見に行ってくれます！
+const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 5万件のダミーデータを生成中...');
@@ -18,10 +11,7 @@ async function main() {
   const baseDate = new Date();
 
   for (let i = 1; i <= totalRecords; i++) {
-    // 1〜500までのユーザーIDをランダムに割り振る（インデックスの検証用）
     const randomUserId = Math.floor(Math.random() * 500) + 1;
-    
-    // 日時も少しずつズラして生成する（ORDER BY の検証用）
     const dummyDate = new Date(baseDate.getTime() - i * 1000);
 
     dummyMessages.push({
@@ -33,7 +23,6 @@ async function main() {
 
   console.log('💾 データベースへ一括挿入（バルクインサート）を開始します...');
   
-  // ★重要: Prismaの createMany を使うことで、5万件を1回のSQLで高速挿入します
   await prisma.message.createMany({
     data: dummyMessages,
   });
