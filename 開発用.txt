@@ -636,4 +636,4 @@ rm prisma/seed.js
 💾 データベースへ一括挿入（バルクインサート）を開始します...
 ✨ 5万件のダミーデータの挿入が完了しました！
 
-
+package.jsonファイル　のESlint 実行コマンドを　ci用と　ローカルテスト用のとで分類したため、npm　install を実行し、package-lock.jsonファイルを更新。
