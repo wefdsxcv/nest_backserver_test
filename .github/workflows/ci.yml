@@ -4,7 +4,8 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main" ]   # git hub がmain ブランチに push されたとき。main ブランチ向けの PR が作られたとき　git hub が自動でjobs 以下を実行する。
+
 
 jobs:
   # ==========================================

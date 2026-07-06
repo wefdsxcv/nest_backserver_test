@@ -1,0 +1,12 @@
+ESLint による構文チェック
+ESLintを実行
+修正できるものは自動修正 fix
+修正できないエラーだけ表示
+
+npm run lint 
+npm run lint:fix
+
+3. Unit Test（単体テスト）
+jest フレームワークにより　実行。
+npm run test
+
