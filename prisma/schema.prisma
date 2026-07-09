@@ -14,4 +14,8 @@ model Message {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("messages")
+  // ★追記：user_id と created_at の組み合わせに対する「複合インデックス」を定義
+  // user_id で絞り込んだ後、あらかじめ created_at の降順(desc)で並んでいる目次を作ります
+  @@index([userId, createdAt(sort: Desc)])
 }
+

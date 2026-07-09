@@ -637,3 +637,49 @@ rm prisma/seed.js
 ✨ 5万件のダミーデータの挿入が完了しました！
 
 package.jsonファイル　のESlint 実行コマンドを　ci用と　ローカルテスト用のとで分類したため、npm　install を実行し、package-lock.jsonファイルを更新。
+
+git checkout main
+git pull origin main
+git checkout -b feature/db_index_tuning    ブランチを作成。
+
+prisma/shema.prismaファイルを編集し、　複数インデックスを定義したテーブルを作成。
+マイグレーションを実行し、explan コマンドを実行する。
+まず、ローカルのpostgre コンテナに接続。
+docker exec -it nest_postgres psql -U postgres -d nest_db
+コンテナ内で　EXPLAINコマンドを実行し、sql実行計画を確認する。
+EXPLAIN ANALYZE SELECT * FROM messages WHERE text LIKE '%テスト%';
+
+↓実行ログ↓
+QUERY PLAN                                                  
+--------------------------------------------------------------------------------------------------------------
+ Seq Scan on messages  (cost=0.00..1243.00 rows=49995 width=71) (actual time=0.016..6.586 rows=50000 loops=1)
+   Filter: ((text)::text ~~ '%テスト%'::text)
+ Planning Time: 1.489 ms
+ Execution Time: 8.117 ms
+(4 rows)
+
+先ほど定義した複合index　を試すため、ユーザーIDが 42 番のメッセージを、新しい順に並び替えて取得するsqlを実行する時の実行計画を確認。
+EXPLAIN ANALYZE SELECT * FROM messages WHERE user_id = 42 ORDER BY created_at DESC;
+
+↓実行ログ↓
+QUERY PLAN                                                                    
+-------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=266.36..266.60 rows=96 width=71) (actual time=0.253..0.257 rows=103 loops=1)
+   Sort Key: created_at DESC
+   Sort Method: quicksort  Memory: 36kB
+   ->  Bitmap Heap Scan on messages  (cost=5.03..263.20 rows=96 width=71) (actual time=0.055..0.207 rows=103 loops=1)
+         Recheck Cond: (user_id = 42)
+         Heap Blocks: exact=97
+         ->  Bitmap Index Scan on messages_user_id_created_at_idx  (cost=0.00..5.01 rows=96 width=0) (actual time=0.038..0.038 rows=103 loops=1)
+               Index Cond: (user_id = 42)
+ Planning Time: 0.282 ms
+
+
+Bitmap Index Scan
+↓
+103件だけ取得。103件に減っている！
+↓
+Sort
+↓
+0.25ms
+
