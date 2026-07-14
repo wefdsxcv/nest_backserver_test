@@ -674,7 +674,6 @@ QUERY PLAN
                Index Cond: (user_id = 42)
  Planning Time: 0.282 ms
 
-
 Bitmap Index Scan
 ↓
 103件だけ取得。103件に減っている！
@@ -682,4 +681,56 @@ Bitmap Index Scan
 Sort
 ↓
 0.25ms
+
+N+1問題
+まず、データベースから全ユーザー（今回は例として100人〜500人）を取得する。（これが「1」のクエリ）
+取得したユーザーの配列をループ（for や map）で回す。
+ループの内部で、そのユーザーのIDを元に this.messageRepository.findLatestByUserId(userId) を毎回呼び出す。（これが「N」回のクエリ）
+
+ message_repository_interface.tsファイルを編集。
+ findLatestByUserId 　抽象クラスなので、repository は実装を強制。
+
+ message.serviceファイルにてN+1問題を引き起こすように　for ループ処理を記載。
+ループ内で、以下のコードを毎回呼ぶ
+const latestMessage = await this.messageRepository.findLatestByUserId(userId);
+        
+mesage_repository(prisma)ファイルでは
+return await this.prisma.message.findFirst({
+  where: {
+    userId: userId,
+  },
+  orderBy: {
+    createdAt: 'desc',
+  },
+});
+messages テーブルの中から、条件に合うデータを最初の1件だけ（First）取ってきて！」SQLでいう LIMIT 1
+where 句でuser_id カラムのuserid が一致する行を取得。降順に。
+private prisma = new PrismaClient({
+    log: ['query', 'info', 'warn', 'error'],
+  });　ろぐとして　表示できるように
+
+message_contorolerファイルでget リクエスト　　message/nplusoneエンドポイントを追加。N+1用
+
+npm run start:dev
+# または
+npm run start　　サーバー起動。
+
+curl http://localhost:3000/message/nplusone    getリクエストをmessage/nplusone  に
+
+ログ↓
+[{"userId":1,"latestMessage":{"id":650,"text":"これはテストメッセージ番号 650 です。","userId":1,"createdAt":"2026-07-02T08:44:27.666Z"}},{"userId":2,"latestMessage":{"id":374,"text":"これはテストメッセージ番号 374 
+
+N+1問題を解決するには　join で取る！⇒
+message_repository _interface ファイルを編集し、新たに一回のクエリで一括取得するため用のメソッドを定義。抽象クラスなので、実装は強制。
+message.service とmessage.repotitory(prisma )を編集。
+
+
+調べたいユーザーIDのリスト（1〜100）を用意する
+取得した全データから、各ユーザーの最新の1件だけをメモリ上（JavaScript）でマッピングする
+
+～学んだことまとめ～
+N+1を解消する（SQL回数を減らす）
+不要なデータをDBから送らない（Window関数やJOIN、DB固有機能を使う）⇒今回は全部返している。その後、最新メッセージのみ　ならwindow関数でいいし、　その全履歴いるならjoinとかin句 でN+1を回避しつつ取得すればいいし。（windowもjoinもin句も当たり前だが、dbのメモリ（cpu）などの労力を消費する。最新１件取得なのに、window使わないとnodeのサーバーのメモリの方も大量のデータを抱える。メモリの無駄。だからwindos関数でdbの段階で分ける。）
+アプリ側の計算量も減らす（Mapなどを活用する）
+
 

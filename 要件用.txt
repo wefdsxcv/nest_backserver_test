@@ -43,7 +43,11 @@ src/
 
 機能要件（練習したいこと）
 フロントから　body 値　⇒　dto zod で検証　⇒　保存した結果をbody に入れてレスポンス
+curl -X POST http://localhost:3000/message \
+  -H "Content-Type: application/json" \
+  -d '{"text":"こんにちは！"}'
 
+  post message/ api エンドポイント　に text: z.string().min(1).max(100)　この形式。
 
 デプロイ練習　単体テスト　mock 　できたら結合テスト
 
