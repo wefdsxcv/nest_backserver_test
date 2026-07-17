@@ -2,13 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { CreateMessageDto } from '../presentation/dto/message_dto';
 import { IMessageRepository } from '../domain/repository-interface/message_repository_interface';
 
-interface MessageData {
-  id: number;
-  text: string;
-  userId: number;
-  createdAt: Date;
-}
-
 @Injectable()
 export class MessageService {
   constructor(private readonly messageRepository: IMessageRepository) {}
@@ -23,9 +16,14 @@ export class MessageService {
 
     const userIds = Array.from({ length: 100 }, (_, i) => i + 1);
 
-    const rawMessages =
-      await this.messageRepository.findLatestByUserIds(userIds);
-    const allMessages = rawMessages as MessageData[];
+    const allMessages = (await this.messageRepository.findLatestByUserIds(
+      userIds,
+    )) as {
+      id: number;
+      text: string;
+      userId: number;
+      createdAt: Date;
+    }[];
 
     const results = userIds.map((userId) => {
       const userMessages = allMessages.filter((m) => m.userId === userId);
