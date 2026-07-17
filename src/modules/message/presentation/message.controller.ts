@@ -17,6 +17,7 @@ export class MessageController {
       data: result,
     };
   }
+
   // 🔥 ★【Step 4】N+1問題を大炎上させる実験用エンドポイントを追記！
   // URL「GET http://localhost:3000/messages/nplusone」で呼び出せます
   @Get('nplusone')
